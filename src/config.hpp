@@ -155,7 +155,7 @@ class Path
     fs::path const instance;        ///< Instance-specific directory (per-PID)
     fs::path const portal;          ///< Portal directory for IPC
     fs::path const runtime;         ///< Runtime directory (/tmp/fim/run)
-    fs::path const runtime_host;    ///< Host-side runtime directory
+    fs::path const runtime_host;    ///< Sparse target for explicitly allowed host file mounts
     fs::path const host_home;       ///< Relative path to user's home directory
     fs::path const host_data;       ///< Data directory next to binary
     fs::path const host_data_tmp;   ///< Temporary files in data directory

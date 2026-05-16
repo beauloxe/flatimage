@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <regex>
+#include <unordered_set>
 
 #include "../db/bind.hpp"
 #include "../db/portal/daemon.hpp"
@@ -431,6 +432,7 @@ inline Value<fs::path> Bwrap::test_and_setup(fs::path const& path_file_bwrap_src
 inline Bwrap& Bwrap::symlink_nvidia(fs::path const& path_dir_root_guest, fs::path const& path_dir_root_host)
 {
   std::regex regex_exclude("gst|icudata|egl-wayland", std::regex_constants::extended);
+  std::unordered_set<std::string> set_path_file_host_bound;
 
   auto f_find_and_bind = [&]<typename... Args>(fs::path const& path_dir_search, Args&&... args) -> void
   {
@@ -447,8 +449,16 @@ inline Bwrap& Bwrap::symlink_nvidia(fs::path const& path_dir_root_guest, fs::pat
       // Symlink target is the file and the end of the symlink chain
       // fs::canonical throws if path_file_entry does not exist
       auto path_file_entry_realpath = fs::canonical(path_file_entry);
+      // Bind only the host files that NVIDIA symlinks need, not the containing
+      // host directories.
+      fs::path path_file_host = path_dir_root_host / path_file_entry_realpath.relative_path();
+      fs::create_directories(path_file_host.parent_path());
+      if(set_path_file_host_bound.insert(path_file_entry_realpath.string()).second)
+      {
+        ns_vector::push_back(m_args, "--ro-bind-try", path_file_entry_realpath, path_file_host);
+      }
       // Create target and symlink names
-      fs::path path_link_target = path_dir_root_host / path_file_entry_realpath.relative_path();
+      fs::path path_link_target = path_file_host;
       fs::path path_link_name = path_dir_root_guest / path_file_entry.relative_path();
       // File already exists in the container as a regular file or directory, skip
       return_if(fs::exists(path_link_name) and not fs::is_symlink(path_link_name),);

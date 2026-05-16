@@ -111,9 +111,8 @@ using namespace ns_parser::ns_interface;
         , .path_dir_work = fuse.path_dir_work
       });
     }
-    // Include root binding and custom user-defined bindings
+    // Include custom user-defined bindings
     std::ignore = bwrap
-      .with_bind_ro("/", fim.path.dir.runtime_host)
       .with_binds(Pop(ns_cmd::ns_bind::db_read(fim.path.bin.self), "E::Failed to configure bindings"));
     // Retrieve permissions
     ns_reserved::ns_permissions::Permissions permissions(fim.path.bin.self);
