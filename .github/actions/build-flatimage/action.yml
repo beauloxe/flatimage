@@ -17,6 +17,9 @@ runs:
       shell: bash
       run: |
         mkdir -p dist
+        if [[ "${{ inputs.distribution }}" == "arch" ]]; then
+          grep -qF 'libstdc++' ./deploy/system.sh
+        fi
         sudo ./deploy/flatimage.sh ${{ inputs.distribution }}
         # Rename the output file to include architecture
         sudo mv ./build/dist/${{ inputs.distribution }}.flatimage ./build/dist/${{ inputs.distribution }}-${{ inputs.architecture }}.flatimage
