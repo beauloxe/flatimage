@@ -41,8 +41,15 @@ execute_process(
   COMMAND ${GIT_EXECUTABLE} -c safe.directory=${CMAKE_SOURCE_DIR} describe --tags --abbrev=0
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE FIM_VERSION
+  ERROR_QUIET
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+if("${FIM_VERSION}" STREQUAL "" AND DEFINED ENV{FIM_VERSION})
+  set(FIM_VERSION "$ENV{FIM_VERSION}")
+endif()
+if("${FIM_VERSION}" STREQUAL "")
+  set(FIM_VERSION "0.0.0")
+endif()
 require_variable_cmake(FIM_VERSION)
 ## Timestamp
 string(TIMESTAMP FIM_TIMESTAMP "%Y%m%d%H%M%S")
@@ -52,8 +59,15 @@ execute_process(
   COMMAND ${GIT_EXECUTABLE} -c safe.directory=${CMAKE_SOURCE_DIR} rev-parse --short HEAD
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE FIM_GIT_COMMIT_HASH
+  ERROR_QUIET
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+if("${FIM_GIT_COMMIT_HASH}" STREQUAL "" AND DEFINED ENV{FIM_COMMIT})
+  set(FIM_GIT_COMMIT_HASH "$ENV{FIM_COMMIT}")
+endif()
+if("${FIM_GIT_COMMIT_HASH}" STREQUAL "")
+  set(FIM_GIT_COMMIT_HASH "unknown")
+endif()
 require_variable_cmake(FIM_GIT_COMMIT_HASH)
 
 # External libraries
