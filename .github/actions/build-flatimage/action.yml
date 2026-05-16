@@ -18,6 +18,7 @@ runs:
       run: |
         mkdir -p dist
         if [[ "${{ inputs.distribution }}" == "arch" ]]; then
+          grep -qF 'libgcc' ./deploy/system.sh
           grep -qF 'libstdc++' ./deploy/system.sh
         fi
         sudo ./deploy/flatimage.sh ${{ inputs.distribution }}

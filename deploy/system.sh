@@ -50,8 +50,12 @@ function _system_arch()
   git clone "https://github.com/ruanformigoni/arch-bootstrap.git"
   # Build
   sed -Ei 's|^\s+curl|curl --retry 5|' ./arch-bootstrap/arch-bootstrap.sh
-  grep -qF 'libstdc++' ./arch-bootstrap/arch-bootstrap.sh \
+  grep -qE '(^|[[:space:]])libgcc([[:space:]]|$)' ./arch-bootstrap/arch-bootstrap.sh \
+    || sed -Ei 's/(gcc-libs)([[:space:]])/\1 libgcc\2/' ./arch-bootstrap/arch-bootstrap.sh
+  grep -qE '(^|[[:space:]])libstdc\+\+([[:space:]]|$)' ./arch-bootstrap/arch-bootstrap.sh \
     || sed -Ei 's/(gcc-libs)([[:space:]])/\1 libstdc++\2/' ./arch-bootstrap/arch-bootstrap.sh
+  grep -qE '(^|[[:space:]])libgcc([[:space:]]|$)' ./arch-bootstrap/arch-bootstrap.sh
+  grep -qE '(^|[[:space:]])libstdc\+\+([[:space:]]|$)' ./arch-bootstrap/arch-bootstrap.sh
   sed 's/^/-- /' ./arch-bootstrap/arch-bootstrap.sh
   ./arch-bootstrap/arch-bootstrap.sh "$dir_root"
   # Update mirrorlist
