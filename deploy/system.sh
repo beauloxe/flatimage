@@ -40,6 +40,34 @@ function _system_alpine()
   mkdir -p "$dir_root"/fim/config
 }
 
+function _system_arch_fix_device()
+{
+  local dir_root="${1:?dir_root is undefined}"
+  local name="${2:?device name is undefined}"
+  local major="${3:?device major is undefined}"
+  local minor="${4:?device minor is undefined}"
+  local mode="${5:?device mode is undefined}"
+  local path="$dir_root/dev/$name"
+
+  mkdir -p "$dir_root"/dev
+  if [[ ! -c "$path" ]]; then
+    rm -f "$path"
+    mknod -m "$mode" "$path" c "$major" "$minor"
+  fi
+  chmod "$mode" "$path"
+}
+
+function _system_arch_fix_devices()
+{
+  local dir_root="${1:?dir_root is undefined}"
+
+  _system_arch_fix_device "$dir_root" null 1 3 666
+  _system_arch_fix_device "$dir_root" zero 1 5 666
+  _system_arch_fix_device "$dir_root" random 1 8 666
+  _system_arch_fix_device "$dir_root" urandom 1 9 666
+  _system_arch_fix_device "$dir_root" tty 5 0 666
+}
+
 function _system_arch_aur_helper()
 {
   local dir_root="${1:?dir_root is undefined}"
@@ -66,6 +94,7 @@ function _system_arch_aur_helper()
   esac
 
   chroot "$dir_root" /bin/bash -c "pacman -Syu --noconfirm --needed base-devel git"
+  _system_arch_fix_devices "$dir_root"
   chroot "$dir_root" /bin/bash -c "useradd --system --create-home --shell /bin/bash aurbuild"
   mkdir -p "$dir_root"/tmp/aur-helper
   chroot "$dir_root" /bin/bash -c "chown -R aurbuild:aurbuild /tmp/aur-helper"
