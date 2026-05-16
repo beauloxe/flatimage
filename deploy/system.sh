@@ -40,6 +40,43 @@ function _system_alpine()
   mkdir -p "$dir_root"/fim/config
 }
 
+function _system_arch_aur_helper()
+{
+  local dir_root="${1:?dir_root is undefined}"
+  local helper="${FIM_ARCH_AUR_HELPER:-paru}"
+  local aur_pkg
+  local helper_bin
+
+  case "$helper" in
+    yay)
+      aur_pkg="yay-bin"
+      helper_bin="yay"
+      ;;
+    paru)
+      aur_pkg="paru-bin"
+      helper_bin="paru"
+      ;;
+    none|"")
+      return 0
+      ;;
+    *)
+      echo "Unsupported Arch AUR helper '$helper'. Use yay, paru, or none." >&2
+      return 1
+      ;;
+  esac
+
+  chroot "$dir_root" /bin/bash -c "pacman -Syu --noconfirm --needed base-devel git"
+  chroot "$dir_root" /bin/bash -c "useradd --system --create-home --shell /bin/bash aurbuild"
+  mkdir -p "$dir_root"/tmp/aur-helper
+  chroot "$dir_root" /bin/bash -c "chown -R aurbuild:aurbuild /tmp/aur-helper"
+  chroot "$dir_root" /bin/bash -c "runuser -u aurbuild -- git clone https://aur.archlinux.org/${aur_pkg}.git /tmp/aur-helper/${aur_pkg}"
+  chroot "$dir_root" /bin/bash -c "cd /tmp/aur-helper/${aur_pkg} && runuser -u aurbuild -- makepkg --noconfirm --noprogressbar"
+  chroot "$dir_root" /bin/bash -c "pacman -U --noconfirm /tmp/aur-helper/${aur_pkg}/*.pkg.tar.*"
+  chroot "$dir_root" /bin/bash -c "command -v ${helper_bin}"
+  chroot "$dir_root" /bin/bash -c "userdel -r aurbuild"
+  rm -rf "$dir_root"/tmp/aur-helper
+}
+
 function _system_arch()
 {
   local dir_root="${1:?dir_root is undefined}"
@@ -69,6 +106,9 @@ function _system_arch()
   chmod +x "$dir_root"/patch.sh
   chroot "$dir_root" /bin/bash -c /patch.sh
   rm "$dir_root"/patch.sh
+  # Install an AUR helper after pacman hooks are patched. The helper itself is
+  # built as a temporary unprivileged user because makepkg refuses to run as root.
+  _system_arch_aur_helper "$dir_root"
   # Clear cache
   chroot "$dir_root" /bin/bash -c "pacman -Scc --noconfirm"
   rm -rf "$dir_root"/var/cache/pacman/pkg/*
