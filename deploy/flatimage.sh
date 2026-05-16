@@ -17,6 +17,8 @@ shopt -s nullglob extglob
 FIM_DIR_SCRIPT=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 FIM_DIR="$(dirname "$FIM_DIR_SCRIPT")"
 FIM_DIR_BUILD="$FIM_DIR"/build
+FIM_VERSION="${FIM_VERSION:-$(git -C "$FIM_DIR" describe --tags --abbrev=0 2>/dev/null || echo 0.0.0)}"
+FIM_COMMIT="${FIM_COMMIT:-$(git -C "$FIM_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)}"
 # 4MB of reserved space
 FIM_RESERVED_SIZE="$(echo "4 * (2^20)" | bc)"
 BINARIES=(
@@ -133,6 +135,8 @@ function _docker_run()
       --build-arg FIM_FILE_TOOLS="$FIM_FILE_TOOLS" \
       --build-arg FIM_FILE_META="$FIM_FILE_META" \
       --build-arg FIM_DIST="$fim_dist" \
+      --build-arg FIM_VERSION="$FIM_VERSION" \
+      --build-arg FIM_COMMIT="$FIM_COMMIT" \
       -t flatimage-boot \
       -f docker/Dockerfile.boot
     docker run --rm flatimage-boot cat /flatimage/build/src/boot > "$FIM_DIR_BUILD/bin/boot"
